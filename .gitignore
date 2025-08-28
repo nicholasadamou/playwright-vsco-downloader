@@ -1,0 +1,201 @@
+# =============================================================================
+# Playwright Unsplash Downloader - Git Ignore File
+# =============================================================================
+
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# Test environment files
+test.env
+
+# =============================================================================
+# Dependencies & Package Managers
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-workspace-state
+.pnpm-workspace-state-v*
+
+# Package manager lock files (keep pnpm-lock.yaml but ignore others)
+package-lock.json
+yarn.lock
+
+# =============================================================================
+# Build Output & Distribution
+# =============================================================================
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# TypeScript incremental compilation
+*.tsbuildinfo
+
+# =============================================================================
+# Downloads & Generated Content
+# =============================================================================
+downloads/
+images/
+test-downloads/
+
+# Generated manifest files
+local-manifest.json
+*-manifest.json
+
+# Test manifests (except example ones)
+test-manifest.json
+
+# =============================================================================
+# Logs & Debug Files
+# =============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Debug screenshots
+debug-*.png
+screenshots/
+
+# =============================================================================
+# Playwright Specific
+# =============================================================================
+# Playwright browsers (downloaded by playwright install)
+/playwright-browsers/
+/ms-playwright/
+
+# Test results
+/test-results/
+/playwright-report/
+/blob-report/
+
+# Playwright state files
+.auth/
+.state/
+
+# =============================================================================
+# IDE & Editor Files
+# =============================================================================
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# Operating System Files
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+*.tmp
+*.temp
+.cache/
+.temp/
+tmp/
+temp/
+
+# =============================================================================
+# Test Files & Coverage
+# =============================================================================
+coverage/
+*.lcov
+.nyc_output/
+
+# Jest
+coverage/
+
+# =============================================================================
+# Runtime & Process Files
+# =============================================================================
+.pid
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# Application Specific
+# =============================================================================
+# Unsplash API rate limit cache (if implemented)
+.api-cache/
+
+# User-specific configuration overrides
+config.local.json
+settings.local.json
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# =============================================================================
+# Keep These Files
+# =============================================================================
+# Keep example files for documentation
+!.env.example
+!test-manifest.example.json
+!local-manifest.example.json
+
+# Keep important config files
+!tsconfig.json
+!playwright.config.js
+!package.json
+!pnpm-lock.yaml
