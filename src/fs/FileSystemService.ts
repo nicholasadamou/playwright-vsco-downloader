@@ -151,6 +151,9 @@ export class FileSystemService {
     const filename = `${photoId}${extension}`;
     const filepath = path.join(downloadDir, filename);
 
+    // Ensure parent directory exists before saving
+    await this.ensureParentDirectory(filepath);
+
     // Save the download
     await download.saveAs(filepath);
 
@@ -177,6 +180,16 @@ export class FileSystemService {
   }
 
   /**
+   * Ensure parent directory exists for a given file path
+   * @param filePath Full path to file (not directory)
+   * @returns Promise that resolves when parent directory exists
+   */
+  private async ensureParentDirectory(filePath: string): Promise<void> {
+    const parentDir = path.dirname(filePath);
+    await fs.ensureDir(parentDir);
+  }
+
+  /**
    * Read JSON file
    * @param filePath Path to JSON file
    * @returns Parsed JSON data
@@ -199,6 +212,9 @@ export class FileSystemService {
     data: any,
     options: { spaces?: number } = {}
   ): Promise<void> {
+    // Ensure parent directory exists before writing
+    await this.ensureParentDirectory(filePath);
+    
     const defaultOptions = { spaces: 2 };
     return await fs.writeJson(filePath, data, {
       ...defaultOptions,
@@ -370,7 +386,7 @@ export class FileSystemService {
       }
     });
 
-    const manifestPath = path.join(downloadDir, "manifest.json");
+    const manifestPath = path.join(downloadDir, "vsco-manifest.json");
     await this.writeJson(manifestPath, vscoManifest, { spaces: 2 });
 
     console.log(`📄 Generated VSCO manifest: ${this.getRelativePath(manifestPath)}`);
@@ -397,6 +413,9 @@ export class FileSystemService {
     const downloadDir = await this.ensureDownloadDirectory();
     const filename = `${photoId}.${extension}`;
     const filepath = path.join(downloadDir, filename);
+
+    // Ensure parent directory exists before writing
+    await this.ensureParentDirectory(filepath);
 
     // Write the buffer to file
     await fs.writeFile(filepath, imageBuffer);

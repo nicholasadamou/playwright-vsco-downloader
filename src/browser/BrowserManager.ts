@@ -1,5 +1,7 @@
 import { chromium } from "playwright";
 import chalk from "chalk";
+import fs from "fs-extra";
+import path from "path";
 import type {
   Browser,
   BrowserContext,
@@ -204,6 +206,10 @@ export class BrowserManager {
     }
 
     try {
+      // Ensure parent directory exists before taking screenshot
+      const parentDir = path.dirname(filePath);
+      await fs.ensureDir(parentDir);
+      
       const page = await this.getPage();
       await page.screenshot({
         path: filePath,
