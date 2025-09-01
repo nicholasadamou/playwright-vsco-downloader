@@ -80,7 +80,10 @@ export class Config {
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       dryRun: false,
-    } satisfies Required<Omit<ConfigOptions, "limit" | "username">>;
+      maxConcurrency: 3,
+      delayBetweenBatches: 1000,
+      enableBatching: true,
+    } satisfies Required<Omit<ConfigOptions, "limit" | "username" | "batchSize">>;
 
     const config: ConfigOptions = {
       ...defaults,
@@ -237,6 +240,31 @@ export class Config {
 
     if (typeof config.dryRun !== "boolean") {
       throw new Error("DryRun must be a boolean");
+    }
+
+    if (
+      config.maxConcurrency &&
+      (typeof config.maxConcurrency !== "number" || config.maxConcurrency < 1 || config.maxConcurrency > 10)
+    ) {
+      throw new Error("Max concurrency must be between 1 and 10");
+    }
+
+    if (
+      config.delayBetweenBatches &&
+      (typeof config.delayBetweenBatches !== "number" || config.delayBetweenBatches < 0)
+    ) {
+      throw new Error("Delay between batches must be a non-negative number");
+    }
+
+    if (
+      config.batchSize &&
+      (typeof config.batchSize !== "number" || config.batchSize < 1)
+    ) {
+      throw new Error("Batch size must be a positive number");
+    }
+
+    if (config.enableBatching !== undefined && typeof config.enableBatching !== "boolean") {
+      throw new Error("Enable batching must be a boolean");
     }
   }
 

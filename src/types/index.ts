@@ -40,6 +40,14 @@ export interface ConfigOptions {
   userAgent?: string;
   /** Simulate downloads without actually downloading */
   dryRun?: boolean;
+  /** Maximum number of concurrent downloads (default: 3) */
+  maxConcurrency?: number;
+  /** Delay between batches in milliseconds (default: 1000) */
+  delayBetweenBatches?: number;
+  /** Number of downloads per batch (default: same as maxConcurrency) */
+  batchSize?: number;
+  /** Enable progressive downloading with batches (default: true) */
+  enableBatching?: boolean;
 }
 
 

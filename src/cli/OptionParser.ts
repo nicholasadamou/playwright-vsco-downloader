@@ -18,6 +18,10 @@ export interface MainCliOptions {
   dryRun?: boolean;
   username?: string;
   downloadDir?: string;
+  concurrency?: string | number;
+  batchSize?: string | number;
+  delayBetweenBatches?: string | number;
+  noBatching?: boolean;
 }
 
 /**
@@ -32,6 +36,10 @@ export interface NormalizedDownloaderOptions {
   dryRun: boolean;
   username?: string;
   downloadDir?: string;
+  maxConcurrency?: number;
+  batchSize?: number;
+  delayBetweenBatches?: number;
+  enableBatching?: boolean;
 }
 
 
@@ -86,12 +94,18 @@ export class OptionParser {
     const timeout = parseInt(String(options.timeout));
     const retries = parseInt(String(options.retries));
     const limit = parseInt(String(options.limit));
+    const concurrency = parseInt(String(options.concurrency || 3));
+    const batchSize = options.batchSize ? parseInt(String(options.batchSize)) : undefined;
+    const delayBetweenBatches = parseInt(String(options.delayBetweenBatches || 1000));
 
     return {
       ...options,
       timeout,
       retries,
       limit,
+      concurrency,
+      batchSize,
+      delayBetweenBatches,
     };
   }
 
@@ -161,6 +175,24 @@ export class OptionParser {
     // Set custom download directory if provided
     if (options.downloadDir) {
       downloaderOptions.downloadDir = path.resolve(options.downloadDir);
+    }
+
+    // Set concurrency options
+    if (options.concurrency !== undefined) {
+      downloaderOptions.maxConcurrency = Math.max(1, Math.min(10, options.concurrency));
+    }
+
+    if (options.batchSize !== undefined) {
+      downloaderOptions.batchSize = Math.max(1, options.batchSize);
+    }
+
+    if (options.delayBetweenBatches !== undefined) {
+      downloaderOptions.delayBetweenBatches = Math.max(0, options.delayBetweenBatches);
+    }
+
+    // Handle batching toggle
+    if (options.noBatching === true) {
+      downloaderOptions.enableBatching = false;
     }
 
     return downloaderOptions;

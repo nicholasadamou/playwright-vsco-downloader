@@ -181,6 +181,24 @@ export class MainCommand {
           "Show what would be downloaded without actually downloading",
         defaultValue: false,
       },
+      {
+        flag: "-c, --concurrency <number>",
+        description: "Maximum number of concurrent downloads (1-10, default: 3)",
+        defaultValue: defaults.maxConcurrency || 3,
+      },
+      {
+        flag: "--batch-size <number>",
+        description: "Number of downloads per batch (default: same as concurrency)",
+      },
+      {
+        flag: "--delay-between-batches <number>",
+        description: "Delay between batches in milliseconds (default: 1000)",
+        defaultValue: defaults.delayBetweenBatches || 1000,
+      },
+      {
+        flag: "--no-batching",
+        description: "Disable batch processing (process all at once with concurrency limit)",
+      },
     ];
   }
 

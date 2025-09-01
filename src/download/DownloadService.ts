@@ -554,6 +554,7 @@ export class DownloadService {
   /**
    * Process multiple images with concurrency control.
    * Orchestrates the download of multiple images while respecting rate limits.
+   * Now supports both concurrent and sequential processing modes.
    *
    * @param imageEntries - Array of image entries to download
    * @returns Array of download results
@@ -565,11 +566,58 @@ export class DownloadService {
    * ```
    */
   async downloadImages(imageEntries: ImageEntry[]): Promise<DownloadResult[]> {
+    const maxConcurrency = this.config.get("maxConcurrency") || 1;
+    
+    // If concurrency is 1 or not enabled, use sequential processing (legacy behavior)
+    if (maxConcurrency === 1) {
+      return await this.downloadImagesSequentially(imageEntries);
+    }
+    
+    // For concurrent processing, we need to create a browser pool and use the concurrent service
+    console.log(
+      chalk.blue(
+        `🚀 Starting downloads for ${imageEntries.length} images ` +
+        `(concurrent mode: ${maxConcurrency} workers)...`
+      )
+    );
+    
+    // Import the required classes dynamically to avoid circular dependencies
+    const { BrowserPool } = await import("../browser/BrowserPool.js");
+    const { ConcurrentDownloadService } = await import("./ConcurrentDownloadService.js");
+    
+    const browserPool = new BrowserPool(this.config);
+    
+    try {
+      await browserPool.initialize();
+      
+      const concurrentDownloader = new ConcurrentDownloadService(
+        this.config,
+        browserPool,
+        this.fs,
+        this.stats
+      );
+      
+      return await concurrentDownloader.downloadImagesConcurrently(imageEntries);
+      
+    } finally {
+      await browserPool.cleanup();
+    }
+  }
+  
+  /**
+   * Process images sequentially (legacy behavior).
+   * Used when concurrency is disabled or set to 1.
+   *
+   * @param imageEntries - Array of image entries to download
+   * @returns Array of download results
+   * @private
+   */
+  private async downloadImagesSequentially(imageEntries: ImageEntry[]): Promise<DownloadResult[]> {
     const results: DownloadResult[] = [];
     
-    console.log(chalk.blue(`🚀 Starting downloads for ${imageEntries.length} images...`));
+    console.log(chalk.blue(`🚀 Starting sequential downloads for ${imageEntries.length} images...`));
 
-    // For VSCO, we'll process images sequentially to avoid rate limiting
+    // Process images sequentially
     for (let i = 0; i < imageEntries.length; i++) {
       const entry = imageEntries[i];
       if (!entry) continue;
@@ -584,7 +632,8 @@ export class DownloadService {
 
       // Add a small delay between downloads to be respectful to VSCO
       if (i < imageEntries.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const delay = this.config.get("delayBetweenBatches") || 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
