@@ -78,7 +78,7 @@ pnpm run download --username photographer123 --no-headless
 pnpm run download --username "https://vsco.co/photographer123"
 
 # Check environment setup
-pnpm run download --check
+pnpm run download -- check
 
 # Download with custom settings
 pnpm run download --username photographer123 --timeout 45000 --retries 5 --limit 10
