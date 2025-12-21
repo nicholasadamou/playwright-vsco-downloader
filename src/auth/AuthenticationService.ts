@@ -313,6 +313,17 @@ export class AuthenticationService {
 
       console.log(chalk.blue("🚀 Submitting login form..."));
 
+      // Check for and dismiss any overlays that might block the button
+      try {
+        const overlay = page.locator('div[class*="_1bm7ugs"]').first();
+        if (await overlay.isVisible({ timeout: 1000 })) {
+          await overlay.click({ force: true }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {
+        // Overlay not present, continue
+      }
+
       // Submit login form - VSCO may use different button text
       const loginSubmitButton = page
         .locator(
@@ -320,7 +331,8 @@ export class AuthenticationService {
         )
         .first();
 
-      await loginSubmitButton.click();
+      // Try to click with force if needed to bypass overlays
+      await loginSubmitButton.click({ force: true });
 
       // Wait for navigation
       console.log(chalk.blue("⏳ Waiting for login to complete..."));
