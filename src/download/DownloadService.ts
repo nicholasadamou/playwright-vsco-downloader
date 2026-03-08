@@ -362,9 +362,20 @@ export class DownloadService {
           vscoImageUrl = `https://vsco.co/${username}`;
         }
 
-        // Extract comprehensive metadata from VSCO page
-        const vscoMetadata = await this.extractVscoImageMetadata(vscoImageUrl, username || '');
-        
+      // Try to extract metadata, using direct_image_url fast path if available
+        let vscoMetadata: {
+          uploadDate?: string;
+          availableSizes?: string[];
+          srcset?: string;
+          originalWidth?: number;
+          originalHeight?: number;
+        } = {};
+
+        if (!imageData.direct_image_url) {
+          const extracted = await this.extractVscoImageMetadata(vscoImageUrl, username || '');
+          vscoMetadata = extracted;
+        }
+
         const result: DownloadResult = {
           success: true,
           photoId,
@@ -429,14 +440,34 @@ export class DownloadService {
         vscoImageUrl = `https://vsco.co/${username}`;
       }
 
-      // No API available, use existing metadata from scraping
+      // Fast path: use direct_image_url from profile scraping if available
+      let directUrl: string;
+      let vscoMetadata: {
+        directImageUrl?: string;
+        uploadDate?: string;
+        availableSizes?: string[];
+        srcset?: string;
+        originalWidth?: number;
+        originalHeight?: number;
+      } = {};
 
-      // Extract comprehensive metadata from VSCO page including upload date and sizes
-      const vscoMetadata = await this.extractVscoImageMetadata(vscoImageUrl, username || '');
+      if (imageData.direct_image_url) {
+        directUrl = imageData.direct_image_url as string;
+        if (directUrl.startsWith('//')) {
+          directUrl = 'https:' + directUrl;
+        }
+        if (this.config.get("debug")) {
+          console.log(chalk.green(`   📸 Using pre-scraped direct URL`));
+        }
+      } else {
+        // Fallback: extract from individual VSCO page
+        vscoMetadata = await this.extractVscoImageMetadata(vscoImageUrl, username || '');
+        directUrl = vscoMetadata.directImageUrl!;
+      }
 
       // Download the image using the direct URL
       const downloadResult = await this.downloadFromDirectUrl(
-        vscoMetadata.directImageUrl,
+        directUrl,
         photoId,
         {
           ...imageData,

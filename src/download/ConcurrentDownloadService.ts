@@ -354,13 +354,35 @@ export class ConcurrentDownloadService {
     const page = await context.newPage();
     
     try {
-      // Extract comprehensive metadata from VSCO page
-      const vscoMetadata = await this.extractVscoImageMetadata(page, vscoImageUrl, username || '');
-      
+      let directUrl: string;
+      let vscoMetadata: {
+        directImageUrl?: string;
+        uploadDate?: string;
+        availableSizes?: string[];
+        srcset?: string;
+        originalWidth?: number;
+        originalHeight?: number;
+      } = {};
+
+      // Fast path: use direct_image_url from profile scraping if available
+      if (imageData.direct_image_url) {
+        directUrl = imageData.direct_image_url as string;
+        if (directUrl.startsWith('//')) {
+          directUrl = 'https:' + directUrl;
+        }
+        if (this.config.get("debug")) {
+          console.log(chalk.green(`   📸 Using pre-scraped direct URL`));
+        }
+      } else {
+        // Fallback: extract from individual VSCO page
+        vscoMetadata = await this.extractVscoImageMetadata(page, vscoImageUrl, username || '');
+        directUrl = vscoMetadata.directImageUrl!;
+      }
+
       // Download the image using the direct URL
       const downloadResult = await this.downloadFromDirectUrl(
         page,
-        vscoMetadata.directImageUrl,
+        directUrl,
         photoId,
         {
           ...imageData,
