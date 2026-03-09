@@ -1,64 +1,65 @@
 #!/usr/bin/env node
 
-/**
- * @fileoverview CLI entry point for the Playwright Image Downloader.
- * Wires together the CLI application, option parsing, environment checks,
- * output formatting, and individual command handlers. This script is intended
- * to be executed directly (via Node shebang) and does not export any symbols.
- *
- * Responsibilities:
- * - Construct dependencies and inject them into commands
- * - Register commands in the CLI application
- * - Run the command parsing and dispatch flow
- */
+import { Command } from "commander";
+import chalk from "chalk";
+import { readExport } from "./ExportReader.js";
+import { downloadImages } from "./Downloader.js";
+import { generateManifest } from "./ManifestGenerator.js";
 
-// Import CLI components
-import { OptionParser } from "./cli/OptionParser.js";
-import { EnvironmentChecker } from "./cli/EnvironmentChecker.js";
-import { OutputFormatter } from "./cli/OutputFormatter.js";
-import { CliApplication } from "./cli/CliApplication.js";
+const program = new Command();
 
-// Import command handlers
-import { MainCommand } from "./cli/commands/MainCommand.js";
-import { CheckCommand } from "./cli/commands/CheckCommand.js";
+program
+  .name("vsco-downloader")
+  .description("Download images from a VSCO data export")
+  .requiredOption(
+    "--export-path <path>",
+    "Path to VSCO data export directory or images.json"
+  )
+  .requiredOption("--output-dir <path>", "Directory to save downloaded images")
+  .option(
+    "--concurrency <number>",
+    "Number of concurrent downloads",
+    "5"
+  )
+  .action(async (opts: { exportPath: string; outputDir: string; concurrency: string }) => {
+    console.log(chalk.bold("\n🎨 VSCO Image Downloader\n"));
 
-/**
- * Main CLI entry point that initializes and coordinates all services.
- * Uses dependency injection to wire up the application components.
- *
- * @returns {Promise<void>} Resolves when CLI completes execution. The process
- * may exit with a non-zero code on failure via internal handlers.
- */
-async function main() {
-  try {
-    // Initialize services (Dependency Injection)
-    const optionParser = new OptionParser();
-    const environmentChecker = new EnvironmentChecker();
-    const outputFormatter = new OutputFormatter();
+    try {
+      const { images, imagesDir } = readExport(opts.exportPath);
 
-    // Create CLI application orchestrator
-    const cliApp = new CliApplication(outputFormatter);
+      if (images.length === 0) {
+        console.log(chalk.yellow("No images found in export."));
+        return;
+      }
 
-    // Initialize command handlers with their dependencies
-    const mainCommand = new MainCommand(optionParser, outputFormatter);
-    const checkCommand = new CheckCommand(environmentChecker, outputFormatter);
+      console.log(chalk.blue(`⬇️  Downloading to: ${opts.outputDir}\n`));
 
-    // Register all command handlers
-    cliApp.registerCommand(mainCommand);
-    cliApp.registerCommand(checkCommand);
+      const results = await downloadImages(
+        images,
+        opts.outputDir,
+        imagesDir,
+        parseInt(opts.concurrency, 10)
+      );
 
-    // Set up error handling
-    cliApp.setupErrorHandling();
+      generateManifest(images, results, opts.outputDir);
 
-    // Run the application
-    await cliApp.run();
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Fatal CLI error:", errorMessage);
-    process.exit(1);
-  }
-}
+      const succeeded = results.filter((r) => r.success && !r.skipped).length;
+      const skipped = results.filter((r) => r.skipped).length;
+      const failed = results.filter((r) => !r.success).length;
 
-// Execute main function
-main();
+      console.log(chalk.bold("\n📊 Summary:"));
+      console.log(chalk.green(`  ✅ Downloaded: ${succeeded}`));
+      console.log(chalk.gray(`  ⏭  Skipped:    ${skipped}`));
+      if (failed > 0) {
+        console.log(chalk.red(`  ❌ Failed:     ${failed}`));
+      }
+      console.log();
+    } catch (err) {
+      console.error(
+        chalk.red(`\n❌ Error: ${err instanceof Error ? err.message : err}`)
+      );
+      process.exit(1);
+    }
+  });
+
+program.parse();
